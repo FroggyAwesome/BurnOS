@@ -1,0 +1,9 @@
+build/
+.*
+!.github/
+!.clang-format
+!.dockerignore
+!.gdbinit
+!.gitattributes
+!.gitignore
+!.vimrc

@@ -1,0 +1,101 @@
+Burn Operating System (BurnOS)
+==============================
+
+Repository Description
+======================
+
+Welcome to the official repository for BurnOS, an operating system
+written entirely in C that is based on neither Unix nor Linux.
+
+License
+=======
+
+BurnOS is free software released under the terms of the 3-Clause BSD License.
+See the LICENSE file for details.
+
+Quick Start
+-----------
+
+To quickly build, package, and test BurnOS on your local machine,
+ensure you have Docker and QEMU.
+
+1. Clone the repository
+   git clone https://github.com/FroggyAwesome/BurnOS.git
+   cd BurnOS
+
+2. Build the kernel, create the ISO image, and run it in QEMU
+   make docker run
+
+Project Layout
+--------------
+
+The source tree is intentionally kept minimalist and flat where possible:
+
+  arch/   - Low-level configurations
+  bin/    - Binaries
+  boot/   - Grub configuration
+  dev/    - Hardware drivers
+  etc/    - Configurations
+  kernel/ - Core kernel
+
+Languages & Compilers Used
+--------------------------
+
+- C99 (GNU C Compiler)
+- Assembly (GNU Assembler)
+- Linker Script (GNU Linker)
+
+Tools Used
+----------
+
+- Docker
+- GDB (GNU Debugger)
+- Make (GNU Make)
+- Vim
+
+Hardware Requirements
+---------------------
+
+- CPU - Intel 386/486/586/686
+- GPU - iGPU
+- RAM - 1M
+- KB  - PS2 USA
+- FW  - BIOS
+
+Development & Contribution Workflow
+-----------------------------------
+
+Before submitting any Pull Request or patch to BurnOS, code must pass
+the strict verification pipeline to ensure compliance with the target
+architecture and formatting standards.
+
+1. Verify code syntax and warnings (treating all warnings as errors):
+   make check
+
+2. Format the codebase automatically using the project's formatting configuration:
+   make format
+
+3. Test the operating system in debug mode to ensure stability and proper execution:
+   make debug iso run
+
+Unformatted code, failing static checks, or runtime regressions will be automatically rejected.
+
+AI Coding Assistant Guidelines
+------------------------------
+
+Code generated or assisted by AI tools must strictly adhere to the
+following constraints before being proposed:
+
+- Environment: 32-bit x86 bare-metal, freestanding. No standard C library.
+- Language Standard: Strict GNU C99.
+- Philosophy: Favor pure, low-level, self-contained implementations
+  over complex abstractions or unnecessary dependencies.
+
+Communication & Support
+-----------------------
+
+For questions, discussions, bug reports, or feature proposals regarding BurnOS,
+please open an issue or submit a pull request on GitHub.
+
+Please avoid opening issues for general C programming questions or personal
+operating system design support. Keep discussions focused strictly on the BurnOS codebase.
