@@ -58,15 +58,15 @@ void
 cmd_help(void)
 {
 	vga_print("Available commands:\n");
-	vga_print("  SYSTEM   IO   UTILS   CONFIG     HARDWARE SHELL\n");
-	vga_print("  -------- ---- ------- ---------- -------- -----\n");
-	vga_print("  help     dir  time    set prompt cpu      exit\n");
-	vga_print("  whoami   cat  date    set color  gpu      #\n");
-	vga_print("  hostname echo day     set cursor colors   {}\n");
-	vga_print("  version  cls  uptime\n");
-	vga_print("  arch          sleep\n");
-	vga_print("  reboot        calc\n");
-	vga_print("  poweroff      desktop\n");
+	vga_print("  SYSTEM   IO    UTILS   CONFIG     HARDWARE SHELL\n");
+	vga_print("  -------- ----- ------- ---------- -------- -----\n");
+	vga_print("  help     dir   time    set prompt cpu      exit\n");
+	vga_print("  whoami   cat   date    set color  gpu      #\n");
+	vga_print("  hostname write day     set cursor colors   {}\n");
+	vga_print("  version  rm    uptime\n");
+	vga_print("  arch     echo  sleep\n");
+	vga_print("  reboot   cls   calc\n");
+	vga_print("  poweroff       desktop\n");
 	vga_print("  panic\n");
 	vga_print("  halt\n");
 }

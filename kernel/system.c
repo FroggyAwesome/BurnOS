@@ -66,10 +66,10 @@ panic(const char *message)
 	vga_print_color("HOST: ", panic_bg);
 	vga_print_color(HOST, panic_bg);
 	vga_set_cursor(2, 6);
-	vga_print_color("CPU Arch: ", panic_bg);
+	vga_print_color("Arch: ", panic_bg);
 	vga_print_color(ARCH, panic_bg);
 	vga_set_cursor(2, 7);
-	vga_print_color("OS Version: ", panic_bg);
+	vga_print_color("Version: ", panic_bg);
 	vga_print_color(VERSION, panic_bg);
 	vga_set_cursor(2, 24);
 	vga_print_color("System halted. Please restart manually.", panic_footer);
