@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-      - 'rc-v*'
 
 jobs:
   release:
@@ -22,13 +21,14 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
-          name: "${{ startsWith(github.ref_name, 'rc-') && 'PRE' || 'REL' }}: ${{ github.ref_name }}"
+          name: "${{ contains(github.ref_name, '-rc') && 'PRE' || 'REL' }}: ${{ github.ref_name }}"
           files: |
             build/out/BurnOS.iso
+            build/out/BurnOS.img
             build/bin/kerneldbg.bin
             build/bin/kernelstd.bin
           generate_release_notes: true
-          prerelease: ${{ startsWith(github.ref_name, 'rc-') }}
-          make_latest: ${{ !startsWith(github.ref_name, 'rc-') }}
+          prerelease: ${{ contains(github.ref_name, '-rc') }}
+          make_latest: ${{ !contains(github.ref_name, '-rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

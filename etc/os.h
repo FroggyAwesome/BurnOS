@@ -2,7 +2,7 @@
 #define OS_H
 
 #define NAME "BurnOS"
-#define VERSION "NULL"
+#define VERSION "v2.00-rc1"
 #define ARCH "x86"
 #define HOST "burnos"
 

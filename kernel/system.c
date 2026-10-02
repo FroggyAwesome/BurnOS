@@ -1,5 +1,4 @@
 #include "system.h"
-#include "dev.h"
 #include "io.h"
 #include "keyboard.h"
 #include "os.h"
@@ -28,8 +27,8 @@ void
 halt(void)
 {
 	keyboard_flush();
-	hide_cursor();
-	print("System halted. Kernel stopped.\n");
+	vga_hide_cursor();
+	vga_print("System halted. Kernel stopped.\n");
 	__asm__ volatile("cli");
 	while (1) {
 		__asm__ volatile("hlt");
@@ -40,9 +39,9 @@ void
 panic(const char *message)
 {
 	__asm__ volatile("cli");
-	hide_cursor();
+	vga_hide_cursor();
 
-	unsigned short *vga_buffer = get_vga_buffer();
+	unsigned short *vga_buffer = vga_get_buffer();
 	unsigned char panic_bg = VGA_ENTRY_COLOR(VGA_BG_RED, VGA_FG_WHITE);
 	unsigned char panic_footer = VGA_ENTRY_COLOR(VGA_BG_RED, VGA_FG_BLACK);
 
@@ -52,31 +51,60 @@ panic(const char *message)
 		}
 	}
 
-	set_cursor(2, 1);
-	print_color("-------------------------", panic_bg);
-	set_cursor(2, 2);
-	print_color("[ ", panic_bg);
-	print_color(NAME, panic_bg);
-	print_color(" - KERNEL PANIC ]", panic_bg);
-	set_cursor(2, 3);
-	print_color("-------------------------", panic_bg);
-	set_cursor(2, 4);
-	print_color("Reason: ", panic_bg);
-	print_color(message, panic_bg);
-	set_cursor(2, 5);
-	print_color("HOST: ", panic_bg);
-	print_color(HOST, panic_bg);
-	set_cursor(2, 6);
-	print_color("CPU Arch: ", panic_bg);
-	print_color(ARCH, panic_bg);
-	set_cursor(2, 7);
-	print_color("OS Version: ", panic_bg);
-	print_color(VERSION, panic_bg);
-	set_cursor(2, 24);
-	print_color("System halted. Please restart manually.", panic_footer);
+	vga_set_cursor(2, 1);
+	vga_print_color("-------------------------", panic_bg);
+	vga_set_cursor(2, 2);
+	vga_print_color("[ ", panic_bg);
+	vga_print_color(NAME, panic_bg);
+	vga_print_color(" - KERNEL PANIC ]", panic_bg);
+	vga_set_cursor(2, 3);
+	vga_print_color("-------------------------", panic_bg);
+	vga_set_cursor(2, 4);
+	vga_print_color("Reason: ", panic_bg);
+	vga_print_color(message, panic_bg);
+	vga_set_cursor(2, 5);
+	vga_print_color("HOST: ", panic_bg);
+	vga_print_color(HOST, panic_bg);
+	vga_set_cursor(2, 6);
+	vga_print_color("CPU Arch: ", panic_bg);
+	vga_print_color(ARCH, panic_bg);
+	vga_set_cursor(2, 7);
+	vga_print_color("OS Version: ", panic_bg);
+	vga_print_color(VERSION, panic_bg);
+	vga_set_cursor(2, 24);
+	vga_print_color("System halted. Please restart manually.", panic_footer);
 
 	keyboard_flush();
 	while (1) {
 		__asm__ volatile("hlt");
 	}
+}
+
+void
+cpu(void)
+{
+	unsigned int ebx, edx, ecx;
+	__asm__ volatile(
+			"cpuid"
+			: "=b"(ebx), "=d"(edx), "=c"(ecx)
+			: "a"(0));
+
+	char vendor[13];
+	*(unsigned int *)&vendor[0] = ebx;
+	*(unsigned int *)&vendor[4] = edx;
+	*(unsigned int *)&vendor[8] = ecx;
+	vendor[12] = '\0';
+
+	vga_print("CPU Vendor: ");
+	vga_print(vendor);
+	vga_print("\n");
+}
+
+void
+gpu(void)
+{
+	vga_print("GPU / Display Info:\n");
+	vga_print("  Controller: VGA Text Mode\n");
+	vga_print("  Resolution: 80x25 text cells\n");
+	vga_print("  Memory:     0xB8000\n");
 }

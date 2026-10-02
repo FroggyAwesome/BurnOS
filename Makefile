@@ -1,11 +1,8 @@
 # Project & Version Configuration
 TARGET = BurnOS
-FILEFORMAT = iso
-VERSION = 1
-PATCHLEVEL = 0
-SUBLEVEL = 0
-EXTRAVERSION =
-FULL_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+VERSION = 2.00
+EXTRAVERSION = -rc1
+FULL_VERSION = $(VERSION)$(EXTRAVERSION)
 
 # Toolchain & Architecture Settings
 GDBADDR = tcp:localhost:1234
@@ -14,10 +11,6 @@ CC = gcc
 CF = clang-format
 ASFLAGS = --32
 SU = sudo
-
-# Target Media Configuration & Selection (usb or floppy)
-DEVICE_TYPE = usb
-DEVICE = sdc
 
 # Paths & File Discovery
 INCLUDES = -Iarch -Ibin -Idev -Ietc -Ikernel
@@ -42,18 +35,19 @@ CCHECKFLAGS = $(CHECK_BASE) $(CHECK_WARNINGS) $(CFILES)
 CFORMATFLAGS = -i $(CFILES) $(HFILES) $(CONFIGFILES)
 
 # QEMU Emulator Configuration
+EMUMSG = @echo "[+] Launching QEMU..."
 EMU = qemu-system-i386
-KVM = -enable-kvm
 EMUCPU = -cpu 486,vendor="SOFT_EMU_486" -smp 1
-EMUKVMCPU = -cpu host,vendor="KVM_EMU_HOST",pmu=off -smp 1
 EMUMEM = -m 512M
-EMUOPTS = -net none -nodefaults -machine pc -boot d
+EMUOPTS = -net none -nodefaults -machine pc
 EMUDISPLAY0 = -none
 EMUDISPLAY1 = -vga std
 EMULOGFILE = build/qemu.log
 EMULOG = -d int,cpu_reset -D $(EMULOGFILE)
 EMUFLAGS = $(EMUCPU) $(EMUMEM) $(EMUOPTS) $(EMUDISPLAY1)
-EMUKVMFLAGS = $(KVM) $(EMUKVMCPU) $(EMUMEM) $(EMUOPTS) $(EMUDISPLAY1)
+
+# Bootloader / GRUB Configuration
+CFG_SRC ?= boot/default-grub/grub.cfg
 
 # Docker Container Configuration
 IMAGE_NAME = burnos-builder
@@ -62,7 +56,7 @@ IMAGE_NAME = burnos-builder
 OBJS = build/objs/arch/boot.o build/objs/arch/isr.o $(patsubst %.c,build/objs/%.o,$(CFILES))
 
 # PHONY Targets Declaration
-.PHONY: all debug build docker format check perms flash iso run run-kvm run-debug version clean-objs clean-bin clean-iso clean-os clean-log clean-version distclean
+.PHONY: all debug build docker format check perms img iso iso-default-grub iso-fast-grub run run-iso run-img run-debug run-debug-iso run-debug-img version clean-objs clean-bin clean-iso clean-os clean-log clean-version distclean
 
 # Main Build Targets
 all: check format distclean version build/bin/kerneldbg.bin build/bin/kernelstd.bin
@@ -81,8 +75,7 @@ docker:
 	@echo "[+] Building Docker image..."
 	docker build -t $(IMAGE_NAME) .
 	@echo "[+] Compiling $(TARGET) inside container..."
-	docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/workspace" $(IMAGE_NAME) make all iso
-	@echo "[Done!] ISO image generated in build/out/$(TARGET).iso"
+	docker run --rm --user $$(id -u):$$(id -g) -v "$(PWD):/workspace" $(IMAGE_NAME) make all iso img
 
 # Compilation Pattern Rules
 build/objs/arch/boot.o: arch/boot.s
@@ -108,45 +101,56 @@ check:
 	$(CC) $(CCHECKFLAGS)
 perms:
 	@echo "[+] Adjusting ownership and permissions..."
-	$(SU) chown -R $(USER):$(USER) .
-	find . -type d -exec chmod 755 {} +
-	find . -type f -exec chmod 644 {} +
+	@$(SU) chown -R $(USER):$(USER) .
+	@find . -type d -exec chmod 755 {} +
+	@find . -type f -exec chmod 644 {} +
 	@echo "[Done!] Permissions corrected successfully."
-flash:
-	@if [ "$(DEVICE_TYPE)" = "usb" ]; then \
-		echo "[+] Flashing $(TARGET) to USB (/dev/$(DEVICE))..."; \
-		$(SU) dd if=build/out/$(TARGET).$(FILEFORMAT) of=/dev/$(DEVICE) bs=4M status=progress conv=fdatasync; \
-	elif [ "$(DEVICE_TYPE)" = "floppy" ]; then \
-		echo "[+] Writing $(TARGET) to Floppy (/dev/$(DEVICE))..."; \
-		$(SU) dd if=build/out/$(TARGET).$(FILEFORMAT) of=/dev/$(DEVICE) bs=512 status=progress conv=fdatasync; \
-	else \
-		echo "Error: Unknown DEVICE_TYPE. Choose 'usb' or 'floppy'."; \
-		exit 1; \
-	fi
-	@echo "[Done!] $(TARGET) successfully written to $(DEVICE_TYPE)."
+img:
+	@echo "[+] Writing $(TARGET).iso to img file..."
+	@dd if=build/out/$(TARGET).iso of=build/out/$(TARGET).img bs=4M status=progress conv=fdatasync
+	@echo "[Done!] $(TARGET).iso successfully written to $(TARGET).img."
 
 # ISO & Emulation Targets
 iso:
+	@$(MAKE) --no-print-directory CFG_SRC=boot/default-grub/grub.cfg iso-default-grub
+iso-default-grub:
+	@echo "[+] Building ISO image..."
 	@mkdir -p build/out/ build/iso/boot/grub/
 	@if [ -f build/bin/kerneldbg.bin ] && [ -f build/bin/kernelstd.bin ]; then \
+		echo "[+] Copying both kernels (dbg and std)"; \
 		cp build/bin/kerneldbg.bin build/iso/boot/kerneldbg.bin; \
 		cp build/bin/kernelstd.bin build/iso/boot/kernelstd.bin; \
 	elif [ -f build/bin/kerneldbg.bin ]; then \
+		echo "[+] Copying dbg kernel"; \
 		cp build/bin/kerneldbg.bin build/iso/boot/kerneldbg.bin; \
 	elif [ -f build/bin/kernelstd.bin ]; then \
+		echo "[+] Copying std kernel"; \
 		cp build/bin/kernelstd.bin build/iso/boot/kernelstd.bin; \
 	else \
-		echo "Error: No kernel binary found."; \
+		echo "[Error] No kernel binary found."; \
 		exit 1; \
 	fi
-	cp boot/grub.cfg build/iso/boot/grub/grub.cfg
+	@echo "[+] Copying grub.cfg from $(CFG_SRC)..."
+	@cp $(CFG_SRC) build/iso/boot/grub/grub.cfg
+	@echo "[+] Generating ISO image with grub-mkrescue..."
 	grub-mkrescue -o build/out/$(TARGET).iso build/iso
-run:
-	$(EMU) $(EMUFLAGS) -cdrom build/out/$(TARGET).$(FILEFORMAT)
-run-kvm:
-	$(EMU) $(EMUKVMFLAGS) -cdrom build/out/$(TARGET).$(FILEFORMAT)
-run-debug:
-	$(EMU) $(EMUFLAGS) -gdb $(GDBADDR) -S $(EMULOG) -cdrom build/out/$(TARGET).$(FILEFORMAT)
+	@echo "[Done!] ISO image successfully built"
+iso-fast-grub:
+	@$(MAKE) --no-print-directory CFG_SRC=boot/fast-grub/grub.cfg iso-fast-grub
+run: run-iso
+run-iso:
+	$(EMUMSG)
+	@$(EMU) $(EMUFLAGS) -boot d -cdrom build/out/$(TARGET).iso
+run-img:
+	$(EMUMSG)
+	@$(EMU) $(EMUFLAGS) -hda build/out/$(TARGET).img
+run-debug: run-debug-iso
+run-debug-iso:
+	$(EMUMSG)
+	@$(EMU) $(EMUFLAGS) -gdb $(GDBADDR) -S $(EMULOG) -boot d -cdrom build/out/$(TARGET).iso
+run-debug-img:
+	$(EMUMSG)
+	@$(EMU) $(EMUFLAGS) -gdb $(GDBADDR) -S $(EMULOG) -hda build/out/$(TARGET).img
 
 # Version Management
 version:

@@ -1,5 +1,4 @@
 #include "vga.h"
-#include "dev.h"
 #include "io.h"
 
 static unsigned short *const vga_buffer = (unsigned short *)VGA_BUFFER;
@@ -18,7 +17,7 @@ update_cursor(void)
 }
 
 void
-hide_cursor(void)
+vga_hide_cursor(void)
 {
 	outb(0x3D4, 0x0A);
 	unsigned char current = inb(0x3D5);
@@ -27,7 +26,7 @@ hide_cursor(void)
 }
 
 void
-show_cursor(void)
+vga_show_cursor(void)
 {
 	outb(0x3D4, 0x0A);
 	unsigned char current = inb(0x3D5);
@@ -63,7 +62,7 @@ scroll(void)
 }
 
 void
-clear_screen(void)
+vga_clear_screen(void)
 {
 	unsigned short val = (current_color << 8) | ' ';
 	__asm__ volatile("rep stosw" : : "D"(vga_buffer), "a"(val), "c"(VGA_WIDTH * VGA_HEIGHT) : "memory");
@@ -104,7 +103,7 @@ vga_putchar(char c)
 }
 
 void
-print_color(const char *str, unsigned char color)
+vga_print_color(const char *str, unsigned char color)
 {
 	while (*str) {
 		vga_putchar_color(*str++, color);
@@ -112,31 +111,31 @@ print_color(const char *str, unsigned char color)
 }
 
 void
-print(const char *str)
+vga_print(const char *str)
 {
-	print_color(str, current_color);
+	vga_print_color(str, current_color);
 }
 
 unsigned short *
-get_vga_buffer(void)
+vga_get_buffer(void)
 {
 	return vga_buffer;
 }
 
 int
-get_cursor_x(void)
+vga_get_cursor_x(void)
 {
 	return cursor_x;
 }
 
 int
-get_cursor_y(void)
+vga_get_cursor_y(void)
 {
 	return cursor_y;
 }
 
 void
-set_cursor(int x, int y)
+vga_set_cursor(int x, int y)
 {
 	cursor_x = x;
 	cursor_y = y;
@@ -144,7 +143,7 @@ set_cursor(int x, int y)
 }
 
 void
-set_cursor_form(char type)
+vga_set_cursor_form(char type)
 {
 	unsigned char start = 13;
 	unsigned char end = 14;
@@ -164,4 +163,13 @@ set_cursor_form(char type)
 	outb(0x3D5, start);
 	outb(0x3D4, 0x0B);
 	outb(0x3D5, end);
+}
+
+void
+vga_putchar_at(int x, int y, char c, unsigned char color)
+{
+	if (x < 0 || x >= VGA_WIDTH || y < 0 || y >= VGA_HEIGHT)
+		return;
+
+	vga_buffer[y * VGA_WIDTH + x] = ((unsigned short)color << 8) | (unsigned char)c;
 }

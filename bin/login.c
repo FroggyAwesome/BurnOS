@@ -18,7 +18,7 @@ streq(const char *s1, const char *s2)
 static void
 read_password(char *buf, int max_len)
 {
-	hide_cursor();
+	vga_hide_cursor();
 	int i = 0;
 	while (i < max_len - 1) {
 		char c = scancode_to_ascii(get_scancode());
@@ -49,21 +49,21 @@ login(void)
 	char username[64];
 	char password[64];
 
-	print("The username and password are included when the program is compiled and cannot\nbe modified during execution.\n\n");
+	vga_print("The username and password are included when the program is compiled and cannot\nbe modified during execution.\n\n");
 
 	while (1) {
-		set_cursor_form('b');
-		print(HOST " login: ");
+		vga_set_cursor_form('b');
+		vga_print(HOST " login: ");
 		read_line(username, sizeof(username));
 
-		print("Password: ");
+		vga_print("Password: ");
 		read_password(password, sizeof(password));
 
 		if (streq(username, USER) == 0 && streq(password, PASSWD) == 0) {
-			print("\n");
+			vga_print("\n");
 			break;
 		} else {
-			print("Login incorrect\n\n");
+			vga_print("Login incorrect\n\n");
 			sleep_ms(500);
 		}
 	}

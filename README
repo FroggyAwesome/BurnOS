@@ -2,13 +2,13 @@ Burn Operating System (BurnOS)
 ==============================
 
 Repository Description
-======================
+----------------------
 
 Welcome to the official repository for BurnOS, an operating system
 written entirely in C that is based on neither Unix nor Linux.
 
 License
-=======
+-------
 
 BurnOS is free software released under the terms of the 3-Clause BSD License.
 See the LICENSE file for details.
@@ -33,7 +33,7 @@ The source tree is intentionally kept minimalist and flat where possible:
 
   arch/   - Low-level configurations
   bin/    - Binaries
-  boot/   - Grub configuration
+  boot/   - Boot configurations
   dev/    - Hardware drivers
   etc/    - Configurations
   kernel/ - Core kernel

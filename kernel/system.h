@@ -5,5 +5,7 @@ void poweroff(void) __attribute__((noreturn));
 void reboot(void) __attribute__((noreturn));
 void halt(void) __attribute__((noreturn));
 void panic(const char *message) __attribute__((noreturn));
+void cpu(void);
+void gpu(void);
 
 #endif
